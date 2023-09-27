@@ -1,6 +1,5 @@
+use std::{env, fs};
 use std::error::Error;
-use std::{env, fs, io};
-use std::fmt::Error;
 
 pub struct InputParams {
     query: String,
