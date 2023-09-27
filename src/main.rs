@@ -1,15 +1,15 @@
 use std::{env, process};
-use minigrep::{InputArgs, run};
+use minigrep::{InputParams, run};
 
 fn main() {
-    let arguments_vec = env::args().skip(1).collect::<Vec<String>>();
-    let arguments_parsed = InputArgs::from_slice(&arguments_vec)
+    let cli_args = env::args().skip(1).collect::<Vec<String>>();
+    let params = InputParams::build(&cli_args)
         .unwrap_or_else(|err_msg| {
             println!("Error while parsing arguments: {}", err_msg);
             process::exit(1);
         });
 
-    if let Err(err) = run(arguments_parsed) {
+    if let Err(err) = run(params) {
         println!("Error while searching for occurrences: {}", err);
         process::exit(1);
     }

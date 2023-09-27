@@ -1,20 +1,22 @@
 use std::error::Error;
-use std::fs;
+use std::{env, fs};
 
-pub struct InputArgs {
+pub struct InputParams {
     query: String,
     file_path: String,
+    ignore_case: bool,
 }
 
-impl InputArgs {
-    pub fn from_slice(args: &[String]) -> Result<InputArgs, &'static str> {
+impl InputParams {
+    pub fn build(args: &[String]) -> Result<InputParams, &'static str> {
         if args.len() < 2 {
             return Err("2 input arguments are required");
         }
 
-        Ok(InputArgs {
+        Ok(InputParams {
             query: args.get(0).unwrap().to_string(),
             file_path: args.get(1).unwrap().to_string(),
+            ignore_case: env::var("IGNORE_CASE").is_ok(),
         })
     }
 
@@ -25,13 +27,22 @@ impl InputArgs {
     pub fn get_file_path(&self) -> &str {
         self.file_path.as_str()
     }
+
+    pub fn get_ignore_case(&self) -> bool {
+        self.ignore_case
+    }
 }
 
-pub fn run(arguments: InputArgs) -> Result<(), Box<dyn Error>> {
-    let query = arguments.get_query();
-    let file_path = arguments.get_file_path();
+pub fn run(params: InputParams) -> Result<(), Box<dyn Error>> {
+    let query = params.get_query();
+    let ignore_case = params.get_ignore_case();
+    let file_path = params.get_file_path();
     let file_contents = fs::read_to_string(file_path)?;
-    let found_lines = search(query, &file_contents);
+    let found_lines = if ignore_case {
+        search_case_insensitive(query, &file_contents)
+    } else {
+        search_case_sensitive(query, &file_contents)
+    };
 
     if found_lines.is_empty() {
         println!("-- No lines containing \"{}\" substring found --", query);
@@ -45,11 +56,23 @@ pub fn run(arguments: InputArgs) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+fn search_case_sensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let mut result: Vec<&'a str> = Vec::new();
 
     for line in contents.lines() {
         if line.contains(query) {
+            result.push(line);
+        }
+    }
+
+    result
+}
+
+fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+    let mut result: Vec<&'a str> = Vec::new();
+
+    for line in contents.lines() {
+        if line.to_lowercase().contains(&query.to_lowercase()) {
             result.push(line);
         }
     }
@@ -62,13 +85,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn should_find_one_line() {
+    fn should_find_one_line_case_sensitive() {
         let query = "duct";
         let contents = "\
 Rust:
 safe, fast, productive.
-Pick three.";
+Pick three.
+Duct tape.";
+        let expected_result = vec!["safe, fast, productive."];
+        let execution_result = search_case_sensitive(query, contents);
 
-        assert_eq!(vec!["safe, fast, productive."], search(query, contents));
+        assert_eq!(expected_result, execution_result);
+    }
+
+    #[test]
+    fn should_find_one_line_case_insensitive() {
+        let query = "rUsT";
+        let contents = "\
+Rust:
+safe, fast, productive.
+Pick three.
+Trust me.";
+        let expected_result = vec!["Rust:", "Trust me."];
+        let execution_result = search_case_insensitive(query, contents);
+
+        assert_eq!(expected_result, execution_result);
     }
 }
