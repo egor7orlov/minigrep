@@ -1,5 +1,6 @@
 use std::error::Error;
-use std::{env, fs};
+use std::{env, fs, io};
+use std::fmt::Error;
 
 pub struct InputParams {
     query: String,
@@ -44,10 +45,10 @@ pub fn run(params: InputParams) -> Result<(), Box<dyn Error>> {
         search_case_sensitive(query, &file_contents)
     };
 
-    if found_lines.is_empty() {
-        println!("-- No lines containing \"{}\" substring found --", query);
-        return Ok(());
-    }
+    // TODO: return Err with message "-- No lines containing \"{query}\" substring found --"
+    //  if there are no matches for query
+    // if found_lines.is_empty() {
+    // }
 
     for line_with_occurrence in found_lines {
         println!("{}", line_with_occurrence);
