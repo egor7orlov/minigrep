@@ -1,5 +1,6 @@
 use std::{env, process};
-use minigrep::{InputParams, run};
+use minigrep::{run};
+use minigrep::app_params::InputParams;
 
 fn main() {
     let cli_args = env::args().skip(1).collect::<Vec<String>>();
