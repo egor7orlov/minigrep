@@ -7,8 +7,10 @@
 ### Usage
 
 ```shell
-IGNORE_CASE=0 cargo run -- "query_string" /path/to/file.txt 
+$ IGNORE_CASE=0 cargo run -- "query_string" /path/to/file.txt 
 ```
+
+`IGNORE_CASE` is an optional env variable which can be set to 1 or 0.
 
 ---
 
